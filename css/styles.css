@@ -439,7 +439,7 @@ body { min-width: 320px; overflow-x: hidden; }
   width: 100%;
   border-collapse: collapse;
   font-size: 0.87rem;
-  min-width: 640px;
+  min-width: 920px;
 }
 
 .result-table thead th {
@@ -471,6 +471,38 @@ body { min-width: 320px; overflow-x: hidden; }
 .result-table tbody tr.row--nao-consta { background: var(--color-danger-soft); }
 .result-table tbody tr.row--nao-consta:hover { background: #fbe3e3; }
 
+.result-table tbody tr.row--conferido { background: var(--color-primary-soft); }
+.result-table tbody tr.row--conferido:hover { background: #dbe8ff; }
+
+.check-cell { text-align: center; }
+
+.row-check {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.obs-cell { white-space: normal; }
+
+.row-observacao {
+  width: 100%;
+  min-width: 180px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.row-observacao:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -489,6 +521,11 @@ body { min-width: 320px; overflow-x: hidden; }
 .status-badge--nao-consta {
   background: #fde0e0;
   color: #b91c1c;
+}
+
+.status-badge--conferido {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
 }
 
 .motivo-cell {
@@ -545,6 +582,11 @@ body { min-width: 320px; overflow-x: hidden; }
   .result-table tbody tr:hover { background: #1b2231; }
   .result-table tbody tr.row--nao-consta { background: #2a1414; }
   .result-table tbody tr.row--nao-consta:hover { background: #331717; }
+  .result-table tbody tr.row--conferido { background: #1b2942; }
+  .result-table tbody tr.row--conferido:hover { background: #223353; }
   .status-badge--nao-consta { background: #3a1616; color: #f28b8b; }
   .status-badge--consta { background: #123322; color: #6fdc9c; }
+  .status-badge--conferido { background: #1b2942; color: #8fb4f5; }
+  .row-observacao { background: #0f1420; }
+  .row-observacao:focus { background: #171d2b; }
 }

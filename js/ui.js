@@ -175,13 +175,18 @@ export function onPageChange(handler) {
 
 /**
  * Converte os resultados da conciliação em linhas prontas para exibição
- * (Emissão, Vencimento, Cartão, Valor da Venda, Status, Motivo).
+ * (Emissão, Vencimento, Cartão, Valor da Venda, Status, Motivo), acrescidas
+ * dos campos de revisão manual (Conferido / Observação) preenchidos pela
+ * equipe. `id` é o índice original em `results` — estável mesmo quando a
+ * linha é reordenada ou filtrada na tela, usado para localizar a linha ao
+ * processar o clique no checkbox ou a digitação na observação.
  */
 export function buildDisplayRows(results) {
-  return results.map((r) => {
+  return results.map((r, index) => {
     const rec = r.sistemaRecord;
     const valorNumero = Number(rec['Valor da Venda']);
     return {
+      id: index,
       emissao: formatDateCell(rec['Emissão']),
       vencimento: formatDateCell(rec['Vencimento']),
       cartao: String(rec['Cartão'] ?? '').trim(),
@@ -189,8 +194,50 @@ export function buildDisplayRows(results) {
       valorNumero,
       status: r.status,
       motivo: r.motivo || '',
+      checked: false,
+      observacao: '',
     };
   });
+}
+
+/** Determina rótulo e classe do badge de status, considerando a revisão manual. */
+function statusBadgeInfo(row) {
+  if (row.checked) return { label: 'Conferido', cls: 'status-badge--conferido' };
+  if (row.status === STATUS.CONSTA) return { label: row.status, cls: 'status-badge--consta' };
+  return { label: row.status, cls: 'status-badge--nao-consta' };
+}
+
+function rowClasses(row) {
+  if (row.checked) return 'row--conferido';
+  if (row.status === STATUS.NAO_CONSTA) return 'row--nao-consta';
+  return '';
+}
+
+export function onRowCheckToggle(handler) {
+  els.tbody.addEventListener('change', (e) => {
+    const checkbox = e.target.closest('.row-check');
+    if (!checkbox) return;
+    const id = Number(checkbox.closest('tr').dataset.rowId);
+    handler(id, checkbox.checked);
+  });
+}
+
+export function onRowObservacaoInput(handler) {
+  els.tbody.addEventListener('input', (e) => {
+    const input = e.target.closest('.row-observacao');
+    if (!input) return;
+    const id = Number(input.closest('tr').dataset.rowId);
+    handler(id, input.value);
+  });
+}
+
+/** Atualiza apenas o badge de status e o destaque da linha após marcar/desmarcar "Conferido". */
+export function updateRowStatusCell(row) {
+  const tr = els.tbody.querySelector(`tr[data-row-id="${row.id}"]`);
+  if (!tr) return;
+  const { label, cls } = statusBadgeInfo(row);
+  tr.querySelector('.status-cell').innerHTML = `<span class="status-badge ${cls}">${escapeHtml(label)}</span>`;
+  tr.className = rowClasses(row);
 }
 
 export function renderTable(rows, page, pageSize) {
@@ -205,18 +252,25 @@ export function renderTable(rows, page, pageSize) {
 
   pageRows.forEach((row) => {
     const tr = document.createElement('tr');
-    if (row.status === STATUS.NAO_CONSTA) tr.classList.add('row--nao-consta');
+    tr.dataset.rowId = String(row.id);
+    tr.className = rowClasses(row);
 
-    const badgeClass = row.status === STATUS.CONSTA ? 'status-badge--consta' : 'status-badge--nao-consta';
+    const { label, cls } = statusBadgeInfo(row);
 
     tr.innerHTML = `
       <td>${escapeHtml(row.emissao)}</td>
       <td>${escapeHtml(row.vencimento)}</td>
       <td>${escapeHtml(row.cartao)}</td>
       <td>${escapeHtml(row.valorFormatado)}</td>
-      <td><span class="status-badge ${badgeClass}">${escapeHtml(row.status)}</span></td>
+      <td class="status-cell"><span class="status-badge ${cls}">${escapeHtml(label)}</span></td>
       <td class="motivo-cell">${escapeHtml(row.motivo)}</td>
+      <td class="check-cell"><input type="checkbox" class="row-check" aria-label="Marcar como conferido"></td>
+      <td class="obs-cell"><input type="text" class="row-observacao" placeholder="Escreva uma observação…" aria-label="Observação"></td>
     `;
+
+    tr.querySelector('.row-check').checked = row.checked;
+    tr.querySelector('.row-observacao').value = row.observacao;
+
     els.tbody.appendChild(tr);
   });
 

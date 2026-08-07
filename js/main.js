@@ -10,6 +10,7 @@ const state = {
   files: { sistema: null, cielo: null },
   reconciliation: null, // { results, unmatchedCielo, summary, sistemaColumns, cieloColumns }
   displayRows: [],
+  rowsById: new Map(),
   view: {
     search: '',
     status: 'all',
@@ -37,6 +38,19 @@ function refreshReconcileButton() {
 
 ui.onReconcileClick(runReconciliation);
 ui.onExportClick(handleExport);
+
+ui.onRowCheckToggle((id, checked) => {
+  const row = state.rowsById.get(id);
+  if (!row) return;
+  row.checked = checked;
+  ui.updateRowStatusCell(row);
+});
+
+ui.onRowObservacaoInput((id, value) => {
+  const row = state.rowsById.get(id);
+  if (!row) return;
+  row.observacao = value;
+});
 
 ui.onSearchInput((value) => {
   state.view.search = value;
@@ -87,6 +101,7 @@ async function runReconciliation() {
 
     state.reconciliation = { results, unmatchedCielo, summary, sistemaColumns, cieloColumns };
     state.displayRows = ui.buildDisplayRows(results);
+    state.rowsById = new Map(state.displayRows.map((row) => [row.id, row]));
     state.view.page = 1;
 
     ui.setProgress(100, 'Concluído!');
@@ -119,7 +134,8 @@ function filterAndSort(rows, view) {
       row.motivo.toLowerCase().includes(term) ||
       row.valorFormatado.toLowerCase().includes(term) ||
       row.emissao.toLowerCase().includes(term) ||
-      row.vencimento.toLowerCase().includes(term)
+      row.vencimento.toLowerCase().includes(term) ||
+      row.observacao.toLowerCase().includes(term)
     );
   });
 
@@ -139,7 +155,7 @@ function filterAndSort(rows, view) {
 function handleExport() {
   if (!state.reconciliation) return;
   const { results, unmatchedCielo, sistemaColumns, cieloColumns } = state.reconciliation;
-  exportResultsToXlsx({ results, unmatchedCielo, sistemaColumns, cieloColumns });
+  exportResultsToXlsx({ results, displayRows: state.displayRows, unmatchedCielo, sistemaColumns, cieloColumns });
 }
 
 function nextFrame(delay = 0) {

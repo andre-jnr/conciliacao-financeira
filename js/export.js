@@ -9,8 +9,9 @@
  *    consumidos por nenhuma linha do sistema (ex.: vendas ainda não
  *    lançadas no sistema interno).
  */
-export function exportResultsToXlsx({ results, unmatchedCielo, sistemaColumns, cieloColumns, fileName }) {
-  const mainRows = results.map(({ sistemaRecord, cieloRecord, status, motivo }) => {
+export function exportResultsToXlsx({ results, displayRows, unmatchedCielo, sistemaColumns, cieloColumns, fileName }) {
+  const mainRows = results.map(({ sistemaRecord, cieloRecord, status, motivo }, index) => {
+    const review = displayRows ? displayRows[index] : null;
     const row = {};
     sistemaColumns.forEach((col) => {
       row[`Sistema - ${col}`] = sistemaRecord[col] ?? '';
@@ -18,8 +19,10 @@ export function exportResultsToXlsx({ results, unmatchedCielo, sistemaColumns, c
     cieloColumns.forEach((col) => {
       row[`Cielo - ${col}`] = cieloRecord ? cieloRecord[col] ?? '' : '';
     });
-    row['Status'] = status;
+    row['Status'] = review && review.checked ? 'Conferido' : status;
     row['Motivo da divergência'] = motivo || '';
+    row['Conferido'] = review && review.checked ? 'Sim' : 'Não';
+    row['Observação'] = review ? review.observacao || '' : '';
     return row;
   });
 
